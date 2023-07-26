@@ -28,7 +28,13 @@ class Message(db.Model):
 
 
 class MessageResource(Resource):
-    # TODO: 
+    # This kind of thing already axists in libraries like Django Storage
+    # and ActiveStorage. I would never re-invent the Wheel on a business
+    # proj. Too costly.
+    # https://guides.rubyonrails.org/active_storage_overview.html
+    # https://github.com/jschneier/django-storages
+    # 
+    # If that weren't allowed, I'd write an Adapter with a similar implemntation: 
     # 
     # 1. Add polymorphism here to support future 'Adapters' that
     # modify storage type: S3, Cloud Storage, etc. 
@@ -83,7 +89,6 @@ class MessageResource(Resource):
 
 class EditMessageResource(Resource):
     # Pseudocode at the moment. Not tested. We have no Views/Forms yet.
-
     @app.route('/message/<int:id>', methods = ['GET', 'POST'])
     def edit(id):
         qry = db.session.query(Message).filter(Message.id == id)
@@ -105,7 +110,6 @@ class EditMessageResource(Resource):
 
 class UpdateMessageResource(Resource):
     # Pseudocode. Not tested.
-
     @app.route('/message/<id>', methods = ['PUT'])
     def message_update(id):
         message = Message.query.get(id)
@@ -146,7 +150,7 @@ class NextMessageResource(Resource):
 # A Prod server has many Python processes. File storage will work fine if they are
 # all on the same physical box. They're accessing the same Volume.
 # If it's a Web Cluster with seprate VMs / Containers that don't share Disk storage,
-# the above code won't work.
+# the above code won't work. The TXT files will often get orphaned.
 
 # Ideas:
 
