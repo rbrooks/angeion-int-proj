@@ -90,6 +90,7 @@ class EditMessageResource(Resource):
         message = qry.first()
 
         if message:
+            # Assumes we built a Message Edit form.
             form = MessageForm(formdata = request.form, obj = message)
             if request.method == 'POST' and form.validate():
                 # save edits
@@ -108,6 +109,11 @@ class UpdateMessageResource(Resource):
     @app.route('/message/<id>', methods = ['PUT'])
     def message_update(id):
         message = Message.query.get(id)
+
+        if message.status == 1:      # assuming 1 means 'In Prog'.
+            # Throw validation-failure message to GUI if this ID was already in prog.
+            return {'error': 'Job already in progress.'}
+        
         message.content = request.json['message']
 
         db.session.commit()
