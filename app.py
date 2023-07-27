@@ -17,7 +17,10 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 # Endpoint             Methods  Rule
 # -------------------  -------  -----------------------
+# edit                 GET      /message/<int:id>
+# message_update       PUT      /message/<id>
 # messageresource      POST     /messages
+# messagesresource     GET      /messages
 # nextmessageresource  GET      /next_message
 # static               GET      /static/<path:filename>
 
@@ -26,6 +29,14 @@ class Message(db.Model):
     file_path = db.Column(db.String(255), unique=True, nullable=False)
     content = db.Column(db.String(500), nullable=False)
 
+class MessagesResource(Resource):
+    # Index route.
+    def get(self):
+        messages = db.session.query(Message).order_by(Message.id.asc())
+        if not messages:
+            return {'error': 'No messages available'}, 404
+
+        return render_template('index.html', messages = messages)
 
 class MessageResource(Resource):
     # This kind of thing already axists in libraries like Django Storage
@@ -123,14 +134,6 @@ class UpdateMessageResource(Resource):
         db.session.commit()
 
         return message.schema.jsonify(message)
-
-class MessagesResource(Resource):
-    def get(self):
-        messages = db.session.query(Message).order_by(Message.id.asc())
-        if not messages:
-            return {'error': 'No messages available'}, 404
-
-        return render_template('index.html', messages = messages)
 
 class NextMessageResource(Resource):
     # TODO: Add similar Polymorphism here to support future 'Adapters'.
