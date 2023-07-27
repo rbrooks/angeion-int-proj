@@ -1,6 +1,6 @@
 import os
 import uuid
-from flask import Flask, request
+from flask import Flask, request, render_template, flash, redirect
 from flask_restful import Resource, Api
 from flask_sqlalchemy import SQLAlchemy
 
@@ -65,7 +65,7 @@ class MessageResource(Resource):
             return {'error': 'No message content provided'}, 400
         file_uuid = uuid.uuid4().hex
         filename = f"{file_uuid}.txt"
-        # CONCERN: Always a small chance of collisions with UUIDs.
+        # FUTURE TICKET: Always a small chance of collisions with UUIDs.
         # I'd add something unique to the User, like:
 
         #    filename = f"{user.id}-{file_uuid}.txt"
@@ -74,7 +74,7 @@ class MessageResource(Resource):
         file_path = os.path.join(UPLOAD_FOLDER, filename)
         with open(file_path, 'w') as f:
             f.write(message_content)
-        message = Message(file_path=file_path, content=message_content)
+        message = Message(file_path = file_path, content = message_content)
         db.session.add(message)
         db.session.commit()
         return {'id': message.id}, 201
@@ -89,7 +89,7 @@ class MessageResource(Resource):
 
 class EditMessageResource(Resource):
     # Pseudocode at the moment. Not tested. We have no Views/Forms yet.
-    @app.route('/message/<int:id>', methods = ['GET', 'POST'])
+    @app.route('/message/<int:id>', methods = ['GET'])
     def edit(id):
         qry = db.session.query(Message).filter(Message.id == id)
         message = qry.first()
@@ -124,6 +124,13 @@ class UpdateMessageResource(Resource):
 
         return message.schema.jsonify(message)
 
+class MessagesResource(Resource):
+    def get(self):
+        messages = db.session.query(Message).order_by(Message.id.asc())
+        if not messages:
+            return {'error': 'No messages available'}, 404
+
+        return render_template('index.html', messages = messages)
 
 class NextMessageResource(Resource):
     # TODO: Add similar Polymorphism here to support future 'Adapters'.
@@ -154,21 +161,22 @@ class NextMessageResource(Resource):
 
 # Ideas:
 
-# 1. Clustered File System
+# 1. OPTIMAL: Clustered File System
 
 # https://www.ufsexplorer.com/articles/clustered-file-systems/
 
 # https://github.com/aws-samples/clustered-storage-gfs2
 
-# 2. HACK: If CFS unavailble, implement some code that distrabutes it to
+# 2. HACK: If CFS unavailble, implement some code that distributes it to
 #   all servers. AWS's API can give us a list of all boxes in the cluter.
-#   Iterate them, and SFTP it to all of them.
+#   Iterate them, and SFTP it to all of them. Have to do the same upon Edit and Del.
 #   (Feels very risky, tho. No fault tollerance. No guarantees that they arrive safe.
-#    We'd have to Auth with SSH Keys, and rotate the keys periocially.)
+#    We'd have to Auth with SSHx Keys, and rotate the keys periocially. Way too much overhead.)
 
+api.add_resource(MessagesResource, '/messages')
 api.add_resource(MessageResource, '/messages')
 api.add_resource(NextMessageResource, '/next_message')
 
 if __name__ == '__main__':
     db.create_all()
-    app.run(debug=True)
+    app.run(port = 8000, debug = True)

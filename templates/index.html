@@ -1,0 +1,46 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Messages CRUD</title>
+</head>
+<body>
+    <h1>Messages</h1>
+
+    <form action="/add" method="POST">
+        <label for="file_">Path:</label>
+        <input type="text" name="file_path" required>
+        <label for="content">Content</label>
+        <input type="content" name="content" required>
+        <button type="submit">Add Message</button>
+    </form>
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Path</th>
+            <th>Content</th>
+        </tr>
+        {% for msg in messages %}
+        <tr>
+            <td>{{ msg['file_path'] }}</td>
+            <td>{{ msg['content'] }}</td>
+            <td>
+                <form action="/update/{{ msg['id'] }}" method="POST">
+                    <input type="hidden" name="_method" value="POST">
+                    <label for="name">Name:</label>
+                    <input type="text" name="file_path" value="{{ msg['file_path'] }}" required>
+                    <label for="content">Content:</label>
+                    <input type="content" name="content" value="{{ msg['content'] }}" required>
+                    <button type="submit">Update</button>
+                </form>
+                <form action="/delete/{{ msg['id'] }}" method="POST">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
