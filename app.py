@@ -1,5 +1,6 @@
 import os
 import uuid
+from cloudstorage.drivers.local import LocalDriver
 from flask import Flask, request, render_template, flash, redirect
 from flask_restful import Resource, Api
 from flask_sqlalchemy import SQLAlchemy
@@ -23,6 +24,21 @@ if not os.path.exists(UPLOAD_FOLDER):
 # messagesresource     GET      /messages
 # nextmessageresource  GET      /next_message
 # static               GET      /static/<path:filename>
+
+# This method would be moved into a /lib dir in this proj.
+def upload_file(filename, driver):
+    # Pass in LocalDriver or S3Driver accordingly. It supports both.
+    driver = LocalDriver(key = 'dd', secret = 'foo')
+
+    container = driver.create_container('avatars')
+    # container.cdn_url 'https://avatars.s3.amazonaws.com/'
+
+    file_blob = container.upload_blob('/path/my-avatar.png')
+    file_blob.cdn_url
+
+    file_blob.generate_download_url(expires = 3600)
+
+    container.generate_upload_url('user-1-avatar.png', expires = 3600)
 
 class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
